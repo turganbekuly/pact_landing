@@ -1,5 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Shield, Users, CheckCircle, Smartphone, AlertTriangle, Menu, X, ChevronRight, Flame, Trophy, Calendar, MoreHorizontal, ArrowLeft, Clock, Lock } from 'lucide-react';
+import React, { useState, useEffect, useContext } from 'react';
+import { Shield, Users, CheckCircle, Smartphone, AlertTriangle, Menu, X, ChevronRight, Flame, Trophy, Calendar, MoreHorizontal, ArrowLeft, Clock, Lock, Globe } from 'lucide-react';
+import { translations } from './locales';
+
+// --- Language Context ---
+
+const LanguageContext = React.createContext<{
+  lang: 'en' | 'ru';
+  t: typeof translations['en'];
+  setLang: (lang: 'en' | 'ru') => void;
+}>({ 
+  lang: 'en', 
+  t: translations.en, 
+  setLang: () => {} 
+});
+
+const useLanguage = () => useContext(LanguageContext);
 
 // --- Shared Components ---
 
@@ -39,6 +54,44 @@ const SectionHeader: React.FC<{
       </p>
     )}
   </div>
+);
+
+// --- Custom Logo Component ---
+
+const PactLogo: React.FC<{ className?: string }> = ({ className = "w-10 h-10" }) => (
+  <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <defs>
+      <linearGradient id="logo-gradient" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#f8fafc" />
+        <stop offset="40%" stopColor="#cbd5e1" />
+        <stop offset="100%" stopColor="#64748b" />
+      </linearGradient>
+      <filter id="inset-shadow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="1" />
+        <feComposite operator="out" in="SourceGraphic" result="inverse" />
+        <feFlood floodColor="black" floodOpacity="1" result="color" />
+        <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+        <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+      </filter>
+    </defs>
+    {/* Hexagon Shape */}
+    <path 
+      d="M50 5 L93.3 25 V75 L50 95 L6.7 75 V25 Z" 
+      fill="url(#logo-gradient)" 
+      stroke="#ffffff"
+      strokeWidth="2"
+      strokeLinejoin="round"
+    />
+    {/* Checkmark */}
+    <path 
+      d="M32 52 L45 65 L68 40" 
+      stroke="#0f172a" 
+      strokeWidth="8" 
+      strokeLinecap="round" 
+      strokeLinejoin="round" 
+      opacity="0.9"
+    />
+  </svg>
 );
 
 // --- Components ---
@@ -99,6 +152,7 @@ const PactCard: React.FC<{
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { lang, setLang, t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -106,26 +160,44 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const toggleLanguage = () => {
+    setLang(lang === 'en' ? 'ru' : 'en');
+  };
+
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b ${isScrolled ? 'bg-slate-950/80 backdrop-blur-xl border-slate-800 py-3' : 'bg-transparent border-transparent py-6'}`}>
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center gap-2 group cursor-pointer">
-          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-lg shadow-white/10 group-hover:shadow-white/20 transition-all">
-            <Shield className="w-5 h-5 text-slate-950 fill-slate-950" />
-          </div>
+        <div className="flex items-center gap-3 group cursor-pointer">
+          <PactLogo className="w-10 h-10 drop-shadow-lg transition-transform group-hover:scale-105" />
           <span className="font-display font-black text-2xl tracking-tighter text-white">PACT</span>
         </div>
 
         {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-8">
-          {['Features', 'Manifesto', 'FAQ'].map((link) => (
-            <a key={link} href={`#${link.toLowerCase()}`} className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
-              {link}
-            </a>
-          ))}
+          <a href="#features" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            {t.nav.features}
+          </a>
+          <a href="#manifesto" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            {t.nav.manifesto}
+          </a>
+          <a href="#faq" className="text-sm font-medium text-slate-400 hover:text-white transition-colors">
+            {t.nav.faq}
+          </a>
+          
+          <div className="w-px h-4 bg-slate-700"></div>
+
+          {/* Language Toggle */}
+          <button 
+            onClick={toggleLanguage}
+            className="flex items-center gap-1.5 text-sm font-medium text-slate-400 hover:text-white transition-colors"
+          >
+            <Globe className="w-4 h-4" />
+            <span className="uppercase">{lang}</span>
+          </button>
+
           <Button variant="primary" className="py-2 px-4 text-xs">
-            Download Beta
+            {t.nav.download}
           </Button>
         </div>
 
@@ -138,12 +210,23 @@ const Navbar = () => {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden absolute top-full left-0 w-full bg-slate-950 border-b border-slate-800 p-6 flex flex-col gap-4 animate-in slide-in-from-top-5">
-           {['Features', 'Manifesto', 'FAQ'].map((link) => (
-            <a key={link} href={`#${link.toLowerCase()}`} className="text-lg font-medium text-slate-300" onClick={() => setMobileMenuOpen(false)}>
-              {link}
+           <a href="#features" className="text-lg font-medium text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+              {t.nav.features}
             </a>
-          ))}
-          <Button className="w-full">Download Beta</Button>
+            <a href="#manifesto" className="text-lg font-medium text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+              {t.nav.manifesto}
+            </a>
+            <a href="#faq" className="text-lg font-medium text-slate-300" onClick={() => setMobileMenuOpen(false)}>
+              {t.nav.faq}
+            </a>
+            <button 
+            onClick={toggleLanguage}
+            className="flex items-center gap-2 text-lg font-medium text-slate-300 justify-start py-2"
+          >
+            <Globe className="w-5 h-5" />
+            <span>Switch to {lang === 'en' ? 'Russian' : 'English'}</span>
+          </button>
+          <Button className="w-full">{t.nav.download}</Button>
         </div>
       )}
     </nav>
@@ -151,6 +234,8 @@ const Navbar = () => {
 };
 
 const Hero = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="relative min-h-screen flex items-center pt-24 overflow-hidden">
       {/* Background Elements */}
@@ -162,25 +247,25 @@ const Hero = () => {
         <div className="space-y-8 z-10 order-2 md:order-1">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-emerald-400 text-xs font-bold uppercase tracking-wider animate-pulse">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            Now Available in Beta
+            {t.hero.badge}
           </div>
           
           <h1 className="text-5xl md:text-7xl font-display font-black text-white leading-[0.95] tracking-tight">
-            Goals are <br/> 
-            <span className="text-slate-600">easy to break.</span> <br/>
-            Pacts are not.
+            {t.hero.title_start} <br/> 
+            <span className="text-slate-600">{t.hero.title_mid}</span> <br/>
+            {t.hero.title_end}
           </h1>
           
           <p className="text-lg text-slate-400 max-w-md leading-relaxed">
-            The first social contract app. Lock in your habit, set a real penalty, and invite your crew. <span className="text-white font-medium">Honor your word.</span>
+            {t.hero.subtitle} <span className="text-white font-medium">{t.hero.honor}</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4">
             <Button className="gap-2">
-              <span className="text-lg"></span> App Store
+              <span className="text-lg"></span> {t.hero.app_store}
             </Button>
             <Button variant="outline">
-              Read the Manifesto
+              {t.hero.read_manifesto}
             </Button>
           </div>
 
@@ -192,7 +277,7 @@ const Hero = () => {
                 </div>
               ))}
             </div>
-            <p>10,000+ Pacts Sealed</p>
+            <p>{t.hero.social_proof}</p>
           </div>
         </div>
 
@@ -208,7 +293,7 @@ const Hero = () => {
                
                {/* Status Bar */}
                <div className="h-12 w-full flex justify-between items-center px-8 pt-4 shrink-0">
-                  <span className="text-white text-xs font-bold">9:41</span>
+                  <span className="text-white text-xs font-bold">{t.hero.phone.time}</span>
                   <div className="flex gap-1.5">
                     <div className="w-4 h-2.5 bg-white rounded-[1px]"></div>
                     <div className="w-0.5 h-1.5 bg-white/30 rounded-[1px] self-center"></div>
@@ -218,7 +303,7 @@ const Hero = () => {
                {/* App Header */}
                <div className="px-6 py-4 flex items-center justify-between shrink-0">
                   <ArrowLeft className="w-6 h-6 text-white" />
-                  <span className="font-display font-bold text-lg text-white">Morning Squad</span>
+                  <span className="font-display font-bold text-lg text-white">{t.hero.phone.squad_name}</span>
                   <MoreHorizontal className="w-6 h-6 text-white" />
                </div>
 
@@ -227,11 +312,11 @@ const Hero = () => {
                   
                   {/* Goal Section */}
                   <div className="mb-6">
-                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">Shared Goal</p>
-                    <h2 className="text-3xl font-display font-bold text-white mb-2">Run 5k Daily</h2>
+                    <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-2">{t.hero.phone.shared_goal_label}</p>
+                    <h2 className="text-3xl font-display font-bold text-white mb-2">{t.hero.phone.shared_goal_val}</h2>
                     <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-lg">
                        <Clock className="w-3 h-3 text-indigo-400" />
-                       <span className="text-indigo-300 text-xs font-bold">Daily Check-in</span>
+                       <span className="text-indigo-300 text-xs font-bold">{t.hero.phone.check_in}</span>
                     </div>
                   </div>
 
@@ -239,7 +324,7 @@ const Hero = () => {
                   <div className="flex justify-between items-end mb-8">
                      <div>
                         <div className="text-6xl font-display font-black text-emerald-500 tracking-tight">98%</div>
-                        <div className="text-slate-400 text-sm font-medium">Consistency</div>
+                        <div className="text-slate-400 text-sm font-medium">{t.hero.phone.consistency}</div>
                      </div>
                      {/* Mini avatars */}
                      <div className="flex -space-x-2">
@@ -263,9 +348,9 @@ const Hero = () => {
                            <Shield className="w-5 h-5 text-amber-500" />
                         </div>
                         <div>
-                           <p className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-1">The Stake</p>
-                           <p className="text-white font-bold leading-snug">"Loser buys coffee for the crew."</p>
-                           <p className="text-amber-700/60 text-[10px] mt-2 font-medium">Agreed by 4 members</p>
+                           <p className="text-amber-500 text-xs font-bold uppercase tracking-wider mb-1">{t.hero.phone.stake_label}</p>
+                           <p className="text-white font-bold leading-snug">{t.hero.phone.stake_val}</p>
+                           <p className="text-amber-700/60 text-[10px] mt-2 font-medium">{t.hero.phone.agreed}</p>
                         </div>
                      </div>
                      <div className="absolute right-0 top-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl -mr-8 -mt-8"></div>
@@ -273,7 +358,7 @@ const Hero = () => {
 
                   {/* Squad Status */}
                   <div className="mb-8">
-                     <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-4">Squad Status</p>
+                     <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-4">{t.hero.phone.squad_status}</p>
                      <div className="space-y-4">
                         {/* User 1 */}
                         <div className="bg-slate-900 rounded-xl p-3 border border-slate-800 flex items-center gap-3">
@@ -283,7 +368,7 @@ const Hero = () => {
                            </div>
                            <div className="flex-1">
                               <div className="flex justify-between items-center mb-1">
-                                 <span className="text-white text-sm font-bold">Alex (You)</span>
+                                 <span className="text-white text-sm font-bold">{t.hero.phone.you}</span>
                                  <div className="flex items-center gap-1 text-amber-500">
                                     <Flame className="w-3 h-3 fill-amber-500" />
                                     <span className="text-xs font-bold">12</span>
@@ -317,19 +402,19 @@ const Hero = () => {
 
                   {/* Latest Update */}
                   <div>
-                     <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-4">Latest Update</p>
+                     <p className="text-slate-500 text-xs font-bold uppercase tracking-wider mb-4">{t.hero.phone.latest_update}</p>
                      <div className="bg-slate-900 rounded-2xl p-4 border border-slate-800">
                         <div className="flex items-center gap-2 mb-3">
                            <div className="w-6 h-6 rounded-full overflow-hidden"><img src="https://picsum.photos/seed/alex/100/100"/></div>
                            <span className="text-white text-sm font-bold">Alex</span>
-                           <span className="text-xs text-slate-500 ml-auto">Just now</span>
+                           <span className="text-xs text-slate-500 ml-auto">{t.hero.phone.just_now}</span>
                         </div>
-                        <p className="text-white text-sm mb-3">5k done before sunrise! 🌅 Legs felt heavy but we move.</p>
+                        <p className="text-white text-sm mb-3">{t.hero.phone.update_text}</p>
                         <div className="h-32 rounded-lg overflow-hidden relative">
                            <img src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=400&auto=format&fit=crop" className="w-full h-full object-cover" />
                            <div className="absolute bottom-2 right-2 bg-emerald-500/20 backdrop-blur border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
                               <CheckCircle className="w-3 h-3 text-emerald-400" />
-                              <span className="text-[10px] font-bold text-white">Verified</span>
+                              <span className="text-[10px] font-bold text-white">{t.hero.phone.verified}</span>
                            </div>
                         </div>
                      </div>
@@ -357,6 +442,8 @@ const Hero = () => {
 };
 
 const ProblemSolution = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="py-24 bg-slate-950 relative border-t border-slate-900">
       <div className="max-w-4xl mx-auto px-6 text-center">
@@ -365,21 +452,17 @@ const ProblemSolution = () => {
         </div>
         
         <h2 className="text-3xl md:text-4xl font-display font-bold text-white mb-6">
-          Willpower fails. <span className="text-emerald-500">Social pressure works.</span>
+          {t.problem.title_start} <span className="text-emerald-500">{t.problem.title_end}</span>
         </h2>
         
         <p className="text-xl text-slate-400 leading-relaxed mb-12">
-          Behavioral psychology tells us that we are 65% more likely to meet a goal if we commit to someone. That number jumps to <span className="text-white font-bold">95%</span> if we have a specific accountability appointment with a person we've committed to.
+          {t.problem.desc_start} <span className="text-white font-bold">{t.problem.desc_bold}</span> {t.problem.desc_end}
         </p>
 
         <div className="grid md:grid-cols-3 gap-6 text-left">
-          {[
-            { title: "No Flaking", desc: "You can't ghost your friends when money or reputation is on the line.", color: "bg-amber-500" },
-            { title: "Real Proof", desc: "Photo verification required. No 'I did it' without showing the work.", color: "bg-emerald-500" },
-            { title: "Shared Glory", desc: "Win together. The dopamine hit of a shared streak is unmatched.", color: "bg-purple-500" }
-          ].map((item, idx) => (
+          {t.problem.cards.map((item, idx) => (
             <div key={idx} className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition-colors">
-              <div className={`w-2 h-2 rounded-full ${item.color} mb-4`}></div>
+              <div className={`w-2 h-2 rounded-full ${idx === 0 ? 'bg-amber-500' : idx === 1 ? 'bg-emerald-500' : 'bg-purple-500'} mb-4`}></div>
               <h3 className="text-white font-bold mb-2">{item.title}</h3>
               <p className="text-slate-400 text-sm">{item.desc}</p>
             </div>
@@ -391,23 +474,19 @@ const ProblemSolution = () => {
 };
 
 const HowItWorks = () => {
+  const { t } = useLanguage();
+  
   const steps = [
     {
       number: "01",
-      title: "Forge a Pact",
-      description: "Create a group, define the goal (e.g., 'Run 5k Daily'), and set the duration.",
       icon: <Users className="w-6 h-6 text-white" />
     },
     {
       number: "02",
-      title: "Set the Stake",
-      description: "Agree on a penalty. Loser buys dinner? $50 to charity? Make it sting.",
       icon: <AlertTriangle className="w-6 h-6 text-amber-500" />
     },
     {
       number: "03",
-      title: "Prove It",
-      description: "Upload daily proof. The group verifies. Keep the streak alive or pay up.",
       icon: <CheckCircle className="w-6 h-6 text-emerald-500" />
     }
   ];
@@ -418,8 +497,8 @@ const HowItWorks = () => {
       
       <div className="max-w-7xl mx-auto px-6">
         <SectionHeader 
-          title="How It Works" 
-          subtitle="Simple rules. Serious consequences. Total accountability."
+          title={t.how_it_works.title}
+          subtitle={t.how_it_works.subtitle}
         />
 
         <div className="grid md:grid-cols-3 gap-8 mt-16 relative">
@@ -437,8 +516,8 @@ const HowItWorks = () => {
                     {step.number}
                   </span>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
-                <p className="text-slate-400 leading-relaxed">{step.description}</p>
+                <h3 className="text-xl font-bold text-white mb-3">{t.how_it_works.steps[idx].title}</h3>
+                <p className="text-slate-400 leading-relaxed">{t.how_it_works.steps[idx].desc}</p>
               </div>
             </div>
           ))}
@@ -449,50 +528,30 @@ const HowItWorks = () => {
 };
 
 const WallOfPacts = () => {
-  const pacts = [
-     {
-        title: "5AM Club",
-        goal: "Wake up & workout by 5:30am",
-        stake: "Loser pays $50 to charity",
-        image: "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=600&q=80",
-        members: 5
-     },
-     {
-        title: "Book Worms",
-        goal: "Read 30 mins every day",
-        stake: "Buy the winner a book",
-        image: "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=600&q=80",
-        members: 3
-     },
-     {
-        title: "Iron Temple",
-        goal: "Hit the gym 4x a week",
-        stake: "Post embarrassing photo on IG",
-        image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80",
-        members: 6
-     },
-     {
-        title: "Deep Work",
-        goal: "2 hours no-phone focus block",
-        stake: "Pay for team lunch",
-        image: "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80",
-        members: 4
-     },
-     {
-        title: "Mindful Monks",
-        goal: "15 min meditation daily",
-        stake: "Clean the office kitchen",
-        image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80",
-        members: 8
-     }
+  const { t } = useLanguage();
+
+  const pactImages = [
+    "https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=600&q=80",
+    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=600&q=80"
   ];
+
+  const pactMembers = [5, 3, 6, 4, 8];
+
+  const pacts = t.wall.pacts.map((pact, index) => ({
+    ...pact,
+    image: pactImages[index],
+    members: pactMembers[index]
+  }));
 
   return (
     <section id="features" className="py-24 bg-slate-950 border-t border-slate-900">
        <div className="max-w-7xl mx-auto px-6 mb-12 flex justify-between items-end">
           <div>
-            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-2">Wall of Pacts</h2>
-            <p className="text-slate-400">Real promises being kept right now.</p>
+            <h2 className="text-3xl md:text-5xl font-display font-bold text-white mb-2">{t.wall.title}</h2>
+            <p className="text-slate-400">{t.wall.subtitle}</p>
           </div>
           <div className="hidden md:flex gap-2">
              <div className="p-2 rounded-full border border-slate-800 text-slate-500 hover:text-white transition-colors cursor-pointer"><ChevronRight className="rotate-180" /></div>
@@ -513,6 +572,8 @@ const WallOfPacts = () => {
 };
 
 const CTA = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="py-32 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 to-emerald-950/20"></div>
@@ -520,18 +581,18 @@ const CTA = () => {
       
       <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
         <h2 className="text-5xl md:text-7xl font-display font-black text-white mb-8 tracking-tight">
-          Ready to commit?
+          {t.cta.title}
         </h2>
         <p className="text-xl text-slate-300 mb-10 max-w-xl mx-auto">
-          Join the beta. Set your first pact. Don't be the one who pays for coffee.
+          {t.cta.subtitle}
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
             <Button className="h-16 px-8 text-lg">
-              Download PACT Beta
+              {t.cta.button}
             </Button>
         </div>
         <p className="mt-8 text-slate-500 text-sm">
-          Strictly limited access. Invite only.
+          {t.cta.footer}
         </p>
       </div>
     </section>
@@ -539,11 +600,13 @@ const CTA = () => {
 };
 
 const Footer = () => {
+  const { t } = useLanguage();
+
   return (
     <footer className="bg-slate-950 py-12 border-t border-slate-900 text-slate-400 text-sm">
       <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
         <div className="flex items-center gap-2">
-          <Shield className="w-5 h-5 text-slate-600" />
+          <PactLogo className="w-6 h-6 opacity-70 grayscale hover:grayscale-0 transition-all" />
           <span className="font-display font-bold text-white tracking-widest">PACT</span>
         </div>
         
@@ -554,7 +617,7 @@ const Footer = () => {
         </div>
 
         <p className="font-medium text-slate-600">
-          Made with Honor. &copy; 2024.
+          {t.footer.made_with} &copy; 2024.
         </p>
       </div>
     </footer>
@@ -562,19 +625,37 @@ const Footer = () => {
 };
 
 const App = () => {
+  const [lang, setLangState] = useState<'en' | 'ru'>('en');
+
+  useEffect(() => {
+    // Detect browser language
+    const userLang = navigator.language || (navigator as any).userLanguage;
+    if (userLang && userLang.toLowerCase().startsWith('ru')) {
+      setLangState('ru');
+    }
+  }, []);
+
+  const setLang = (newLang: 'en' | 'ru') => {
+    setLangState(newLang);
+  };
+
+  const t = translations[lang];
+
   return (
-    <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-emerald-500/30 selection:text-emerald-200">
-      {/* Noise Overlay */}
-      <div className="fixed inset-0 bg-noise pointer-events-none z-50 opacity-5 mix-blend-overlay"></div>
-      
-      <Navbar />
-      <Hero />
-      <ProblemSolution />
-      <HowItWorks />
-      <WallOfPacts />
-      <CTA />
-      <Footer />
-    </div>
+    <LanguageContext.Provider value={{ lang, t, setLang }}>
+      <div className="min-h-screen bg-slate-950 font-sans text-slate-200 selection:bg-emerald-500/30 selection:text-emerald-200">
+        {/* Noise Overlay */}
+        <div className="fixed inset-0 bg-noise pointer-events-none z-50 opacity-5 mix-blend-overlay"></div>
+        
+        <Navbar />
+        <Hero />
+        <ProblemSolution />
+        <HowItWorks />
+        <WallOfPacts />
+        <CTA />
+        <Footer />
+      </div>
+    </LanguageContext.Provider>
   );
 };
 
